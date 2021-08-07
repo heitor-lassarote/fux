@@ -1,0 +1,62 @@
+name: fux
+version: 0.0.0.0
+category: Music
+license: GPL-3.0
+license-file: COPYING
+synopsis: An experimental contrapuntal music generator.
+description: Fux is an experimental, highly-WIP project aiming at the generation of contrapuntal music.
+
+             For now, the project only has a WIP cantus firmus generator and some types with the expectation of being expanded in the future.
+author: Heitor Toledo Lassarote de Paula
+maintainer: Heitor Toledo Lassarote de Paula <heitortoledo@hotmail.com>
+build-type: Simple
+
+dependencies:
+  - base
+  - containers
+  - logict
+  - MonadRandom
+  - mtl
+  - normaldistribution
+  - random
+  - transformers
+
+default-extensions:
+  - BlockArguments
+  - DataKinds
+  - DeriveFoldable
+  - DeriveFunctor
+  - DeriveTraversable
+  - DerivingStrategies
+  - FlexibleInstances
+  - FunctionalDependencies
+  - ImportQualifiedPost
+  - LambdaCase
+  - LexicalNegation
+  - MultiWayIf
+  - OverloadedStrings
+  - PatternSynonyms
+  - RankNTypes
+  - RecordWildCards
+  - ScopedTypeVariables
+  - StrictData
+  - TupleSections
+  - TypeApplications
+  - TypeFamilies
+  - TypeOperators
+  - TypeSynonymInstances
+  - ViewPatterns
+  - UndecidableInstances
+
+ghc-options:
+  - -Weverything
+  - -Wno-all-missed-specializations
+  - -Wno-implicit-prelude
+  - -Wno-missing-import-lists
+  - -Wno-missing-safe-haskell-mode
+  - -Wno-safe
+  - -Wno-unsafe
+
+library:
+  source-dirs:
+    - src/

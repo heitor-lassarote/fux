@@ -1,0 +1,67 @@
+cabal-version: 1.12
+
+-- This file has been generated from package.yaml by hpack version 0.34.4.
+--
+-- see: https://github.com/sol/hpack
+
+name:                fux
+version:             0.0.0.0
+synopsis:            An experimental contrapuntal music generator.
+description:         Fux is an experimental, highly-WIP project aiming at the generation of contrapuntal music.
+                     For now, the project only has a WIP cantus firmus generator and some types with the expectation of being expanded in the future.
+category:            Music
+author:              Heitor Toledo Lassarote de Paula
+maintainer:          Heitor Toledo Lassarote de Paula <heitortoledo@hotmail.com>
+license:             GPL-3.0
+license-file:        COPYING
+build-type:          Simple
+
+library
+  exposed-modules:
+      Music.Fux.Counterpoint
+      Music.Fux.Counterpoint.CantusFirmus
+      Music.Fux.Counterpoint.FirstSpecies
+      Music.Fux.Prelude
+      Music.Fux.Types
+      Music.Util.Shuffle
+  other-modules:
+      Paths_fux
+  build-depends:
+      MonadRandom
+    , base
+    , containers
+    , logict
+    , mtl
+    , normaldistribution
+    , random
+    , transformers
+  hs-source-dirs:
+      src/
+  default-extensions:
+      BlockArguments
+      DataKinds
+      DeriveFoldable
+      DeriveFunctor
+      DeriveTraversable
+      DerivingStrategies
+      FlexibleInstances
+      FunctionalDependencies
+      ImportQualifiedPost
+      LambdaCase
+      LexicalNegation
+      MultiWayIf
+      OverloadedStrings
+      PatternSynonyms
+      RankNTypes
+      RecordWildCards
+      ScopedTypeVariables
+      StrictData
+      TupleSections
+      TypeApplications
+      TypeFamilies
+      TypeOperators
+      TypeSynonymInstances
+      ViewPatterns
+      UndecidableInstances
+  ghc-options: -Weverything -Wno-all-missed-specializations -Wno-implicit-prelude -Wno-missing-import-lists -Wno-missing-safe-haskell-mode -Wno-safe -Wno-unsafe
+  default-language: Haskell2010
