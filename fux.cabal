@@ -25,6 +25,7 @@ library
       Music.Fux.Parser
       Music.Fux.Prelude
       Music.Fux.Pretty
+      Music.Fux.TH
       Music.Fux.Types
       Music.Util.Shuffle
   other-modules:
@@ -40,6 +41,7 @@ library
     , parser-combinators
     , pretty
     , random
+    , template-haskell
     , text
     , transformers
     , unicode
@@ -48,6 +50,7 @@ library
   default-extensions:
       BlockArguments
       DataKinds
+      DeriveDataTypeable
       DeriveFoldable
       DeriveFunctor
       DeriveTraversable

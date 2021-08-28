@@ -22,6 +22,7 @@ dependencies:
   - parser-combinators
   - pretty
   - random
+  - template-haskell
   - text
   - transformers
   - unicode
@@ -29,6 +30,7 @@ dependencies:
 default-extensions:
   - BlockArguments
   - DataKinds
+  - DeriveDataTypeable
   - DeriveFoldable
   - DeriveFunctor
   - DeriveTraversable

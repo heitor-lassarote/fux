@@ -22,6 +22,8 @@ module Music.Fux.Parser
   , pitch
   , voice
   , music
+  , parsePitch
+  , parseVoice
   , parseMusic
   ) where
 
@@ -93,7 +95,16 @@ voice pitchParser = foldr1 (:|:) <$> voiceTerminal `sepEndBy1` hspace1
 music :: Parser a -> Parser (Music a)
 music pitchParser = foldr1 (:-:) <$> ((Voice <$> voice pitchParser) `sepEndBy1` newline)
 
-parseMusic :: Parser a -> Text -> Either String (Music a)
-parseMusic pitchParser =
+parse' :: Parser a -> Text -> Either String a
+parse' parser =
   first errorBundlePretty
-  . parse (space *> music pitchParser <* eof) ""
+  . parse (space *> parser <* eof) ""
+
+parsePitch :: Text -> Either String Pitch
+parsePitch = parse' pitch
+
+parseVoice :: Parser a -> Text -> Either String (Voice a)
+parseVoice pitchParser = parse' (voice pitchParser)
+
+parseMusic :: Parser a -> Text -> Either String (Music a)
+parseMusic pitchParser = parse' (music pitchParser)

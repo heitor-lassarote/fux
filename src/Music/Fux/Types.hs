@@ -64,6 +64,7 @@ import Prelude hiding (rem)
 
 import Music.Fux.Prelude
 
+import Data.Data (Data)
 import Data.List (elemIndex)
 import System.Random
 import System.Random.Stateful (Uniform (..), UniformRange (..))
@@ -78,7 +79,7 @@ data Voice a
   -- ^ A single musical note.
   | Rest Duration
   -- ^ A pause, as opposed to a note.
-  deriving stock (Eq, Foldable, Functor, Show, Traversable)
+  deriving stock (Data, Eq, Foldable, Functor, Show, Traversable)
 
 instance Semigroup (Voice a) where
   Note  0 _ <> b         = b
@@ -98,7 +99,7 @@ data Music a
   -- ^ Compose two musics in parallel.
   | Voice (Voice a)
   -- ^ A piece with a single voice.
-  deriving stock (Eq, Foldable, Functor, Show, Traversable)
+  deriving stock (Data, Eq, Foldable, Functor, Show, Traversable)
 
 instance Semigroup (Music a) where
   (<>) = (:-:)
@@ -111,7 +112,7 @@ instance Monoid (Music a) where
 data Pitch = Pitch
   { pPitchClass :: PitchClass  -- ^ The musical note to which this pitch corresponds to,
   , pOctave     :: Octave  -- ^ The octave of this pitch.
-  } deriving stock (Eq, Show)
+  } deriving stock (Data, Eq, Show)
 
 instance Ord Pitch where
   compare (Pitch pc1 o1) (Pitch pc2 o2) = compare o1 o2 <> compare pc1 pc2
@@ -134,7 +135,7 @@ data PitchClass
   | G | Gs
   | A | As
   | B
-  deriving stock (Bounded, Eq, Ord, Show)
+  deriving stock (Bounded, Data, Eq, Ord, Show)
 
 instance Enum PitchClass where
   fromEnum = \case
