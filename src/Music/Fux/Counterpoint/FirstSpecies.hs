@@ -66,7 +66,7 @@ data FirstSpeciesReader = FirstSpeciesReader
 -- 17. [ ] Progressing from an unison into another consonance is bad.
 generateFirstSpecies :: forall g. RandomGen g => g -> CantusFirmus -> Maybe FirstSpecies
 generateFirstSpecies g (CantusFirmus CantusFirmusSettings{..} cfm) = do
-  firstNote <- first cfm
+  firstNote <- first' cfm
   let initState = FirstSpeciesReader 0 firstNote firstNote
   counterpoint <- runReaderT (observeT (evalRandT go g)) initState
   pure $ FirstSpecies $

@@ -22,6 +22,7 @@ library
       Music.Fux.Counterpoint
       Music.Fux.Counterpoint.CantusFirmus
       Music.Fux.Counterpoint.FirstSpecies
+      Music.Fux.Parser
       Music.Fux.Prelude
       Music.Fux.Pretty
       Music.Fux.Types
@@ -33,10 +34,13 @@ library
     , base
     , containers
     , logict
+    , megaparsec
     , mtl
     , normaldistribution
+    , parser-combinators
     , pretty
     , random
+    , text
     , transformers
     , unicode
   hs-source-dirs:

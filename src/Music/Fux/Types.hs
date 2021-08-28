@@ -65,7 +65,6 @@ import Prelude hiding (rem)
 import Music.Fux.Prelude
 
 import Data.List (elemIndex)
-import Data.List.NonEmpty (NonEmpty (..))
 import System.Random
 import System.Random.Stateful (Uniform (..), UniformRange (..))
 

@@ -15,11 +15,14 @@ dependencies:
   - base
   - containers
   - logict
+  - megaparsec
   - MonadRandom
   - mtl
   - normaldistribution
+  - parser-combinators
   - pretty
   - random
+  - text
   - transformers
   - unicode
 

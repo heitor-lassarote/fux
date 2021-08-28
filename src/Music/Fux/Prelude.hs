@@ -27,7 +27,7 @@ module Music.Fux.Prelude
 
     -- * Utilities
   , (==>)
-  , first
+  , first'
   , pass
 
     -- * Re-exports
@@ -35,10 +35,12 @@ module Music.Fux.Prelude
   ) where
 
 import Control.Applicative as Exports (Alternative (..))
-import Control.Monad as Exports ((<=<), (>=>), guard, unless, when)
+import Control.Monad as Exports ((<=<), (>=>), guard, unless, void, when)
 import Control.Monad.Random.Strict as Exports (MonadRandom, Random, RandomGen)
+import Data.Bifunctor as Exports
 import Data.Foldable as Exports (foldl', for_, traverse_)
 import Data.Function as Exports
+import Data.List.NonEmpty as Exports (NonEmpty (..))
 import Data.Map as Exports (Map)
 import Data.Set as Exports (Set)
 import Data.Traversable as Exports (for)
@@ -83,8 +85,8 @@ prerequisite ==> conclusion = not prerequisite || conclusion
 infixr 1 ==>
 
 -- | Gets the first element of some collection.
-first :: Foldable f => f a -> Maybe a
-first = foldr ((Just .) . const) Nothing
+first' :: Foldable f => f a -> Maybe a
+first' = foldr ((Just .) . const) Nothing
 
 -- | An alias for `pure ()`.
 pass :: Applicative f => f ()
