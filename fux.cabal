@@ -18,10 +18,12 @@ build-type:          Simple
 
 library
   exposed-modules:
+      Data.Char.Music
       Music.Fux.Counterpoint
       Music.Fux.Counterpoint.CantusFirmus
       Music.Fux.Counterpoint.FirstSpecies
       Music.Fux.Prelude
+      Music.Fux.Pretty
       Music.Fux.Types
       Music.Util.Shuffle
   other-modules:
@@ -33,8 +35,10 @@ library
     , logict
     , mtl
     , normaldistribution
+    , pretty
     , random
     , transformers
+    , unicode
   hs-source-dirs:
       src/
   default-extensions:

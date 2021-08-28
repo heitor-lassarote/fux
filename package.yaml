@@ -18,8 +18,10 @@ dependencies:
   - MonadRandom
   - mtl
   - normaldistribution
+  - pretty
   - random
   - transformers
+  - unicode
 
 default-extensions:
   - BlockArguments
