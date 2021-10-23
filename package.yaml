@@ -13,19 +13,6 @@ build-type: Simple
 
 dependencies:
   - base
-  - containers
-  - logict
-  - megaparsec
-  - MonadRandom
-  - mtl
-  - normaldistribution
-  - parser-combinators
-  - pretty
-  - random
-  - template-haskell
-  - text
-  - transformers
-  - unicode
 
 default-extensions:
   - BlockArguments
@@ -55,15 +42,44 @@ default-extensions:
   - ViewPatterns
   - UndecidableInstances
 
-ghc-options:
-  - -Weverything
-  - -Wno-all-missed-specializations
-  - -Wno-implicit-prelude
-  - -Wno-missing-import-lists
-  - -Wno-missing-safe-haskell-mode
-  - -Wno-safe
-  - -Wno-unsafe
-
 library:
   source-dirs:
     - src/
+
+  dependencies:
+    - containers
+    - logict
+    - megaparsec
+    - MonadRandom
+    - mtl
+    - normaldistribution
+    - parser-combinators
+    - pretty
+    - random
+    - template-haskell
+    - text
+    - transformers
+    - unicode
+
+  ghc-options:
+    - -Weverything
+    - -Wno-all-missed-specializations
+    - -Wno-implicit-prelude
+    - -Wno-missing-import-lists
+    - -Wno-missing-safe-haskell-mode
+    - -Wno-safe
+    - -Wno-unsafe
+
+tests:
+  fux-core:
+    main: Driver.hs
+
+    source-dirs:
+      - test/fux-core/
+
+    dependencies:
+      - fux
+      - QuickCheck
+      - tasty
+      - tasty-discover
+      - tasty-quickcheck

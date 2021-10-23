@@ -275,9 +275,25 @@ data Solfège
   = Do | Re | Mi | Fa | Sol | La | Si
   deriving stock (Bounded, Data, Enum, Eq, Ord, Show)
 
+instance Uniform Solfège where
+  uniformM = uniformRM (minBound, maxBound)
+
+instance UniformRange Solfège where
+  uniformRM (l, h) g = toEnum <$> uniformRM (fromEnum l, fromEnum h) g
+
+instance Random Solfège
+
 data Accidental
   = DoubleFlat | Flat | Natural | Sharp | DoubleSharp
   deriving stock (Bounded, Data, Enum, Eq, Ord, Show)
+
+instance Uniform Accidental where
+  uniformM = uniformRM (minBound, maxBound)
+
+instance UniformRange Accidental where
+  uniformRM (l, h) g = toEnum <$> uniformRM (fromEnum l, fromEnum h) g
+
+instance Random Accidental
 
 pitchClassAnalysis :: (Solfège -> Accidental -> a) -> PitchClass -> a
 pitchClassAnalysis f p = uncurry f $ bimap toEnum toEnum $ quotRem (fromEnum p) 5
@@ -435,7 +451,7 @@ simpleInterval :: Pitch SimplePitchClass -> Pitch SimplePitchClass -> CompoundIn
 simpleInterval (Pitch n1 o1) (Pitch n2 o2) =
   case compare n1 n2 of
     LT -> case compare o1 o2 of
-      LT -> CompoundInterval  octaveDiff      (toEnum $      fromEnum n2 - fromEnum n1)
+      LT -> CompoundInterval (octaveDiff - 1) (toEnum $      fromEnum n2 - fromEnum n1)
       EQ -> CompoundInterval  octaveDiff      (toEnum $      fromEnum n2 - fromEnum n1)
       GT -> CompoundInterval (octaveDiff - 1) (toEnum $ 12 + fromEnum n1 - fromEnum n2)
     EQ -> CompoundInterval octaveDiff Pe1'
