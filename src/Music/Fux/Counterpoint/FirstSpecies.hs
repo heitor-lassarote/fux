@@ -31,16 +31,17 @@ import Control.Monad.Reader
 import Music.Fux.Counterpoint.CantusFirmus
 import Music.Fux.Types
 
-newtype FirstSpecies = FirstSpecies { getFirstSpecies :: Music Pitch }
-  deriving stock (Eq, Show)
+newtype FirstSpecies = FirstSpecies
+  { getFirstSpecies :: Music (Pitch SimplePitchClass)
+  } deriving stock (Eq, Show)
 
 data FirstSpeciesReader = FirstSpeciesReader
   { fsrNoteIx :: Word
-  , fsrPrev   :: Pitch
-  , fsrPrevCF :: Pitch
+  , fsrPrev   :: Pitch SimplePitchClass
+  , fsrPrevCF :: Pitch SimplePitchClass
   }
 
--- Generates a first species counterpoint of two or more voices, given some
+-- | Generates a first species counterpoint of two or more voices, given some
 -- cantus firmus.
 --
 -- According to Fux, the following rules should be employed:
@@ -74,14 +75,16 @@ generateFirstSpecies g (CantusFirmus CantusFirmusSettings{..} cfm) = do
     :-:
     (Voice $ mconcat $ Note cfsDuration <$> counterpoint)
   where
-    go :: RandT g (LogicT (ReaderT FirstSpeciesReader Maybe)) [Pitch]
+    go :: RandT g (LogicT (ReaderT FirstSpeciesReader Maybe)) [Pitch SimplePitchClass]
     go = loop cfm
 
     key = pPitchClass cfsPitch
     prev n i = predScale key cfsKey n !! i
     next n i = succScale key cfsKey n !! i
 
-    loop :: [Pitch] -> RandT g (LogicT (ReaderT FirstSpeciesReader Maybe)) [Pitch]
+    loop
+      :: [Pitch SimplePitchClass]
+      -> RandT g (LogicT (ReaderT FirstSpeciesReader Maybe)) [Pitch SimplePitchClass]
     loop [] = pure []
     loop (cfNote : cfNotes) = do
       FirstSpeciesReader{..} <- ask
@@ -95,7 +98,7 @@ generateFirstSpecies g (CantusFirmus CantusFirmusSettings{..} cfm) = do
           , (1, cfNote)
           ]
 
-      let parInterval = interval cfNote note
+      let parInterval = simpleInterval cfNote note
 
       satisfy
         [ sonance parInterval /= Dissonance  -- 2.

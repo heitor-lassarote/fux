@@ -57,26 +57,29 @@ superscript :: Integral a => a -> Doc
 superscript = script Unicode.superscript
 
 pitchClass :: PitchClass -> Doc
-pitchClass = \case
-  C  -> char 'C'
-  Cs -> char 'C' <> char sharp
-  D  -> char 'D'
-  Ds -> char 'D' <> char sharp
-  E  -> char 'E'
-  F  -> char 'F'
-  Fs -> char 'F' <> char sharp
-  G  -> char 'G'
-  Gs -> char 'G' <> char sharp
-  A  -> char 'A'
-  As -> char 'A' <> char sharp
-  B  -> char 'B'
+pitchClass = pitchClassAnalysis (\n a -> docNote n <> docAccidental a)
+  where
+    docNote = char . \case
+      Do  -> 'C'
+      Re  -> 'D'
+      Mi  -> 'E'
+      Fa  -> 'F'
+      Sol -> 'G'
+      La  -> 'A'
+      Si  -> 'B'
+    docAccidental = \case
+      DoubleFlat  -> char doubleFlat
+      Flat        -> char flat
+      Natural     -> mempty
+      Sharp       -> char sharp
+      DoubleSharp -> char doubleSharp
 
 duration :: Rational -> Doc
 duration r
   | denominator r == 1 = superscript $ numerator r
   | otherwise          = superscript (numerator r) <+> superscript (denominator r)
 
-pitch :: Pitch -> Doc
+pitch :: Pitch PitchClass -> Doc
 pitch (Pitch pc o) = pitchClass pc <> subscript o
 
 voice :: (a -> Doc) -> Voice a -> Doc
