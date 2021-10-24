@@ -52,14 +52,15 @@ pitchClass = label "pitch class" do
     , A <$ char' 'A'
     , B <$ char' 'B'
     ]
-  choice
-    [ pred (pred basePitchClass) <$ (string "bb" <|> string (Text.singleton doubleFlat))
-    , pred basePitchClass <$ (char 'b' <|> char flat)
-    , succ (succ basePitchClass) <$ (string "##" <|> string (Text.singleton doubleSharp))
-    , succ basePitchClass <$ (char '#' <|> char sharp)
-    , basePitchClass <$ (char 'n' <|> char natural)
-    , pure basePitchClass
+  accidental <- choice
+    [ pred . pred  <$ (string "bb" <|> string (Text.singleton doubleFlat))
+    , pred <$ (char 'b' <|> char flat)
+    , succ . succ <$ (string "##" <|> string (Text.singleton doubleSharp))
+    , succ <$ (char '#' <|> char sharp)
+    , id <$ (char 'n' <|> char natural)
+    , pure id
     ]
+  pure $ accidental basePitchClass
 
 duration :: Parser Duration
 duration = L.decimal
@@ -77,7 +78,7 @@ chord pitchParser =
 octave :: Parser Octave
 octave = label "octave" L.decimal
 
-pitch :: Parser Pitch
+pitch :: Parser (Pitch PitchClass)
 pitch = label "pitch" $ Pitch <$> pitchClass <*> octave
 
 voice :: forall a. Parser a -> Parser (Voice a)
@@ -100,7 +101,7 @@ parse' parser =
   first errorBundlePretty
   . parse (space *> parser <* eof) ""
 
-parsePitch :: Text -> Either String Pitch
+parsePitch :: Text -> Either String (Pitch PitchClass)
 parsePitch = parse' pitch
 
 parseVoice :: Parser a -> Text -> Either String (Voice a)

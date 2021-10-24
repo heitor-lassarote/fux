@@ -42,12 +42,12 @@ import Music.Fux.Types
 -- generation of a well-formed cantus firmus.
 data CantusFirmus = CantusFirmus
   { cfSettings :: CantusFirmusSettings  -- ^ The settings used to generate the cantus firmus.
-  , cfMelody   :: [Pitch]  -- ^ The melody of the cantus firmus.
+  , cfMelody   :: [Pitch SimplePitchClass]  -- ^ The melody of the cantus firmus.
   } deriving stock (Eq, Show)
 
 -- | Settings for the cantus firmus generator.
 data CantusFirmusSettings = CantusFirmusSettings
-  { cfsPitch    :: Pitch  -- ^ The first and last note of the cantus firmus.
+  { cfsPitch    :: Pitch SimplePitchClass  -- ^ The first and last note of the cantus firmus.
   , cfsDuration :: Duration  -- ^ How long each note should be.
   , cfsLength   :: Word  -- ^ The quantity of notes.
   , cfsKey      :: Key  -- ^ The key in which the cantus firmus should be generated. The key signature is given together with 'cfsPitch'.
@@ -56,18 +56,18 @@ data CantusFirmusSettings = CantusFirmusSettings
 data Direction = Down | Up deriving stock Eq
 
 -- Invariant: Notes are different.
-getDirection :: Pitch -> Pitch -> Direction
+getDirection :: Ord pitch => pitch -> pitch -> Direction
 getDirection prev next
   | prev <= next = Up
   | otherwise    = Down
 
 data CantusFirmusReader = CantusFirmusReader
   { cfrLeapIx    :: Word
-  , cfrClimax    :: Pitch
+  , cfrClimax    :: Pitch SimplePitchClass
   , cfrClimaxIx  :: Word
   , cfrHasClimax :: Bool
   , cfrNoteIx    :: Word
-  , cfrPrev      :: Pitch
+  , cfrPrev      :: Pitch SimplePitchClass
   , cfrPrevInt   :: CompoundInterval
   , cfrDirection :: Direction
   }
@@ -116,7 +116,7 @@ generateCantusFirmus g settings@CantusFirmusSettings{..} =
     initState :: CantusFirmusReader
     initState = CantusFirmusReader 0 cfsPitch 0 False 0 cfsPitch Pe1 Down
 
-    go :: RandT g (LogicT (ReaderT CantusFirmusReader Maybe)) [Pitch]
+    go :: RandT g (LogicT (ReaderT CantusFirmusReader Maybe)) [Pitch SimplePitchClass]
     go = do
       stepsAbove <- getRandomR (4, 9)  -- 5.
       climaxIx :: Double <- liftRandT $ pure . normal' (fromIntegral $ cfsLength `div` 2, 3)
@@ -130,7 +130,7 @@ generateCantusFirmus g settings@CantusFirmusSettings{..} =
     prev n i = predScale key cfsKey n !! i
     next n i = succScale key cfsKey n !! i
 
-    loop :: RandT g (LogicT (ReaderT CantusFirmusReader Maybe)) [Pitch]
+    loop :: RandT g (LogicT (ReaderT CantusFirmusReader Maybe)) [Pitch SimplePitchClass]
     loop = do
       CantusFirmusReader{..} <- ask
       let p = prev cfrPrev
@@ -158,13 +158,13 @@ generateCantusFirmus g settings@CantusFirmusSettings{..} =
       if cfrNoteIx == cfsLength
         then [] <$ guard cfrHasClimax  -- 6.
         else do
-          let seqInterval = interval cfrPrev note
+          let seqInterval = simpleInterval cfrPrev note
           let direction = getDirection cfrPrev note
           let isLeap = seqInterval > Ma2
           let wasLeap = cfrPrevInt > Ma2
 
           satisfy
-            [ interval note cfrClimax <= CompoundInterval 1 Ma3'  -- 5.
+            [ simpleInterval note cfrClimax <= CompoundInterval 1 Ma3'  -- 5.
             , cfrNoteIx /= cfrClimaxIx ==> note < cfrClimax  -- 6.
             , seqInterval /= Au4  -- 4.a.
             , seqInterval /= Ma7 && seqInterval /= Mi7  -- 4.b.

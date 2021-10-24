@@ -76,3 +76,47 @@ library
       UndecidableInstances
   ghc-options: -Weverything -Wno-all-missed-specializations -Wno-implicit-prelude -Wno-missing-import-lists -Wno-missing-safe-haskell-mode -Wno-safe -Wno-unsafe
   default-language: Haskell2010
+
+test-suite fux-core
+  type: exitcode-stdio-1.0
+  main-is: Driver.hs
+  other-modules:
+      Test.Music.Fux.Pitch
+      Paths_fux
+  hs-source-dirs:
+      test/fux-core/
+  default-extensions:
+      BlockArguments
+      DataKinds
+      DeriveDataTypeable
+      DeriveFoldable
+      DeriveFunctor
+      DeriveTraversable
+      DerivingStrategies
+      FlexibleInstances
+      FunctionalDependencies
+      ImportQualifiedPost
+      LambdaCase
+      LexicalNegation
+      MultiWayIf
+      OverloadedStrings
+      PatternSynonyms
+      RankNTypes
+      RecordWildCards
+      ScopedTypeVariables
+      StrictData
+      TupleSections
+      TypeApplications
+      TypeFamilies
+      TypeOperators
+      TypeSynonymInstances
+      ViewPatterns
+      UndecidableInstances
+  build-depends:
+      QuickCheck
+    , base
+    , fux
+    , tasty
+    , tasty-discover
+    , tasty-quickcheck
+  default-language: Haskell2010
