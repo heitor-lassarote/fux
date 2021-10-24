@@ -27,6 +27,10 @@ library
       Music.Fux.Pretty
       Music.Fux.TH
       Music.Fux.Types
+      Music.Fux.Types.Interval
+      Music.Fux.Types.Music
+      Music.Fux.Types.Pitch
+      Music.Fux.Types.Scale
       Music.Util.Shuffle
   other-modules:
       Paths_fux
