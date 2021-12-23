@@ -27,12 +27,12 @@ module Music.Fux.Parser
   , parseMusic
   ) where
 
-import Control.Applicative.Combinators.NonEmpty (sepEndBy1)
+import Control.Applicative.Combinators.NonEmpty (sepEndBy1, some)
 import Data.Char.Music
 import Data.Text (Text)
 import Data.Text qualified as Text
 import Data.Void (Void)
-import Text.Megaparsec hiding (sepEndBy1)
+import Text.Megaparsec hiding (sepEndBy1, some)
 import Text.Megaparsec.Char
 import Text.Megaparsec.Char.Lexer qualified as L
 
@@ -41,29 +41,45 @@ import Music.Fux.Types
 
 type Parser = Parsec Void Text
 
+skipSpaceImpl :: Parser () -> Parser ()
+skipSpaceImpl spaceParser = L.space spaceParser empty empty
+
+skipSpace, hskipSpace :: Parser ()
+skipSpace = skipSpaceImpl space1
+hskipSpace = skipSpaceImpl hspace1
+
+lexeme, hlexeme :: Parser a -> Parser a
+lexeme = L.lexeme skipSpace
+hlexeme = L.lexeme hskipSpace
+
+accidental :: Parser Accidental
+accidental = label "accidental" $ choice
+  [ DoubleFlat <$ (string "bb" <|> string (Text.singleton doubleFlat))
+  , Flat <$ (char 'b' <|> char flat)
+  , DoubleSharp <$ (string "##" <|> string (Text.singleton doubleSharp))
+  , Sharp <$ (char '#' <|> char sharp)
+  , Natural <$ (char 'n' <|> char natural)
+  ]
+
+letterSolfège :: Parser Solfège
+letterSolfège = label "note" $ choice
+  [ Do  <$ char' 'C'
+  , Re  <$ char' 'D'
+  , Mi  <$ char' 'E'
+  , Fa  <$ char' 'F'
+  , Sol <$ char' 'G'
+  , La  <$ char' 'A'
+  , Si  <$ char' 'B'
+  ]
+
 pitchClass :: Parser PitchClass
 pitchClass = label "pitch class" do
-  basePitchClass <- choice
-    [ C <$ char' 'C'
-    , D <$ char' 'D'
-    , E <$ char' 'E'
-    , F <$ char' 'F'
-    , G <$ char' 'G'
-    , A <$ char' 'A'
-    , B <$ char' 'B'
-    ]
-  accidental <- choice
-    [ pred . pred  <$ (string "bb" <|> string (Text.singleton doubleFlat))
-    , pred <$ (char 'b' <|> char flat)
-    , succ . succ <$ (string "##" <|> string (Text.singleton doubleSharp))
-    , succ <$ (char '#' <|> char sharp)
-    , id <$ (char 'n' <|> char natural)
-    , pure id
-    ]
-  pure $ accidental basePitchClass
+  letterSolfège' <- letterSolfège
+  accidental' <- option Natural accidental
+  pure $ solfègeAnalysis id letterSolfège' accidental'
 
 duration :: Parser Duration
-duration = L.decimal
+duration = L.decimal <?> "duration"
 
 rest :: Parser ()
 rest = void $ label "rest" $ char' 'r'
@@ -72,29 +88,29 @@ note :: Parser a -> Parser a
 note = id
 
 chord :: forall a. Parser a -> Parser (NonEmpty a)
-chord pitchParser =
-  label "chord" $ between (char '<' <* hspace) (char '>') (pitchParser `sepEndBy1` hspace1)
+chord pitchParser = label "chord" $
+  between (lexeme (char '<')) (char '>') (some pitchParser)
 
 octave :: Parser Octave
 octave = label "octave" L.decimal
 
 pitch :: Parser (Pitch PitchClass)
-pitch = label "pitch" $ Pitch <$> pitchClass <*> octave
+pitch = label "pitch" $ Pitch <$> lexeme pitchClass <*> octave
 
 voice :: forall a. Parser a -> Parser (Voice a)
-voice pitchParser = foldr1 (:|:) <$> voiceTerminal `sepEndBy1` hspace1
+voice pitchParser = foldr1 (:|:) <$> some voiceTerminal
   where
     voiceTerminal :: Parser (Voice a)
-    voiceTerminal = do
-      d <- duration
+    voiceTerminal = hlexeme do
+      d <- lexeme duration
       choice
         [ Note  d <$> note pitchParser
-        , Chord d <$> chord pitchParser
+        , Chord d <$> chord (lexeme pitchParser)
         , Rest  d <$  rest
         ]
 
 music :: Parser a -> Parser (Music a)
-music pitchParser = foldr1 (:-:) <$> ((Voice <$> voice pitchParser) `sepEndBy1` newline)
+music pitchParser = foldr1 (:-:) <$> ((Voice <$> voice pitchParser) `sepEndBy1` hlexeme newline)
 
 parse' :: Parser a -> Text -> Either String a
 parse' parser =
