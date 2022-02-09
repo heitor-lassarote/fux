@@ -21,6 +21,8 @@ module Music.Fux.Types.Interval
   (
     -- * Interval
     Interval (..)
+  , GenericInterval (..)
+  , toGenericInterval
 
   , pattern Pe1, pattern Mi2, pattern Ma2, pattern Mi3, pattern Ma3, pattern Pe4
   , pattern Au4, pattern Pe5, pattern Mi6, pattern Ma6, pattern Mi7, pattern Ma7
@@ -29,6 +31,8 @@ module Music.Fux.Types.Interval
   , pattern Au1, pattern Di2, pattern Au2, pattern Di3, pattern Au3, pattern Di4
   , pattern Di5, pattern Au5, pattern Di6, pattern Au6, pattern Di7, pattern Au7
   , pattern Di8
+
+  , pattern Tritone
 
   , CompoundInterval (..)
   , interval'
@@ -55,6 +59,33 @@ data Interval
   | Mi6' | Ma6'
   | Mi7' | Ma7'
   deriving stock (Bounded, Enum, Eq, Ord, Show)
+
+-- | A generic interval is like a simple interval, but stripped of its specifics
+-- (diminished, minor, perfect, major our augmented).
+data GenericInterval
+  = Unison
+  | Second
+  | Third
+  | Fourth
+  | Fifth
+  | Sixth
+  | Seventh
+  deriving stock (Bounded, Enum, Eq, Ord, Show)
+
+toGenericInterval :: Interval -> GenericInterval
+toGenericInterval = \case
+  Pe1' -> Unison
+  Mi2' -> Second
+  Ma2' -> Second
+  Mi3' -> Third
+  Ma3' -> Third
+  Pe4' -> Fourth
+  Au4' -> Fourth
+  Pe5' -> Fifth
+  Mi6' -> Sixth
+  Ma6' -> Sixth
+  Mi7' -> Seventh
+  Ma7' -> Seventh
 
 -- | Represents a compound interval, which is like a simple interval but also
 -- accounts for skips greater than an octave.
@@ -92,6 +123,9 @@ pattern Au6 = Mi7
 pattern Di7 = Ma6
 pattern Au7 = Pe8
 pattern Di8 = Ma7
+
+pattern Tritone :: CompoundInterval
+pattern Tritone = Au4
 
 -- | Calculate the simple interval between two pitches.
 interval' :: Pitch PitchClass -> Pitch PitchClass -> Interval

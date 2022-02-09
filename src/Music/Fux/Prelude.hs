@@ -38,6 +38,7 @@ import Control.Applicative as Exports (Alternative (..))
 import Control.Monad as Exports ((<=<), (>=>), guard, unless, void, when)
 import Control.Monad.Random.Strict as Exports (MonadRandom, Random, RandomGen)
 import Data.Bifunctor as Exports
+import Data.Bool as Exports (bool)
 import Data.Foldable as Exports (foldl', for_, traverse_)
 import Data.Function as Exports
 import Data.List.NonEmpty as Exports (NonEmpty (..))

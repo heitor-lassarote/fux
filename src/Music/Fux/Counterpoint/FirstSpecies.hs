@@ -19,6 +19,7 @@
 
 module Music.Fux.Counterpoint.FirstSpecies
   ( FirstSpecies (..)
+  , FirstSpeciesSettings (..)
   , generateFirstSpecies
   ) where
 
@@ -35,6 +36,11 @@ newtype FirstSpecies = FirstSpecies
   { getFirstSpecies :: Music (Pitch SimplePitchClass)
   } deriving stock (Eq, Show)
 
+data FirstSpeciesSettings = FirstSpeciesSettings
+  { fssCantusFirmus        :: CantusFirmus
+  , fssCantusFirmusIsAbove :: Bool
+  }
+
 data FirstSpeciesReader = FirstSpeciesReader
   { fsrNoteIx :: Word
   , fsrPrev   :: Pitch SimplePitchClass
@@ -42,6 +48,30 @@ data FirstSpeciesReader = FirstSpeciesReader
   }
 
 -- | Generates a first species counterpoint of two or more voices, given some
+data Motion
+  = Contrary
+  | Direct
+  | Oblique
+  -- | Parallel
+  deriving stock (Eq, Show)
+
+motion
+  :: (Pitch SimplePitchClass, Pitch SimplePitchClass)
+  -> (Pitch SimplePitchClass, Pitch SimplePitchClass)
+  -> Motion
+motion (prevA, nextA) (prevB, nextB)
+  -- | intA  == intB  = Parallel
+  | prevA == nextA = Oblique
+  | prevB == nextB = Oblique
+  | cmpA  == cmpB  = Direct
+  | otherwise      = Contrary
+  where
+    --intA = toGenericInterval $ interval' prevA nextA
+    --intB = toGenericInterval $ interval' prevB nextB
+    cmpA = compare prevA nextA
+    cmpB = compare prevB nextB
+
+-- Generates a first species counterpoint of two or more voices, given some
 -- cantus firmus.
 --
 -- According to Fux, the following rules should be employed:
@@ -49,24 +79,24 @@ data FirstSpeciesReader = FirstSpeciesReader
 -- 2. [X] Only consonances are used.
 -- 3. [ ] Contrary and oblique motion should be employed as often as possible.
 -- 4. [ ] More imperfect than perfect consonances must be employed.
--- 5. [ ] The beginning and the end must be perfect consonances.
--- 6. [ ] The penultimate bar there must be a major sixth if the cantus firmus is in
+-- 5. [X] The beginning and the end must be perfect consonances.
+-- 6. [X] The penultimate bar must be a major sixth if the cantus firmus is in
 --    the lowest part, and a minor third if it's in the upper part.
--- 7. [ ] Any of the three motions can be used when moving from an imperfect
+-- 7. [X] Any of the three motions can be used when moving from an imperfect
 --    consonance to another imperfect consonance.
--- 8. [ ] From an imperfect to a perfect, one must go in contrary motion.
--- 9. [ ] From a perfect to an imperfect, one must go in contrary motion.
--- 10. [ ] One must only move from a perfect consonance to another in contrary or
+-- 8. [X] From an imperfect to a perfect, one must go in contrary or oblique motion.
+-- 9. [X] From a perfect to an imperfect, one must go in any of the three motions.
+-- 10. [X] One must only move from a perfect consonance to another in contrary or
 --     oblique motion.
--- 11. [ ] The counterpoint must be in the same mode as the cantus firmus.
--- 12. [ ] Skipping a tritone is disallowed.
--- 13. [ ] Avoid overlapping voices.
--- 14. [ ] It is prohibited to skip a major sixth.
+-- 11. [X] The counterpoint must be in the same mode as the cantus firmus.
+-- 12. [X] Skipping a tritone is disallowed.
+-- 13. [X] Avoid overlapping voices.
+-- 14. [X] It is prohibited to skip a major sixth.
 -- 15. [ ] A tenth may not be brought to an octave by contrary motion. (Optional? But going to an octave or unison with a skip is disallowed)
--- 16. [ ] The unison should only appear at the beginning and the end.
--- 17. [ ] Progressing from an unison into another consonance is bad.
-generateFirstSpecies :: forall g. RandomGen g => g -> CantusFirmus -> Maybe FirstSpecies
-generateFirstSpecies g (CantusFirmus CantusFirmusSettings{..} cfm) = do
+-- 16. [X] The unison should only appear at the beginning and the end.
+-- 17. [ ] Progressing from an unison into another consonance by a skip is bad.
+generateFirstSpecies :: forall g. RandomGen g => g -> FirstSpeciesSettings -> Maybe FirstSpecies
+generateFirstSpecies g FirstSpeciesSettings{..} = do
   firstNote <- first' cfm
   let initState = FirstSpeciesReader 0 firstNote firstNote
   counterpoint <- runReaderT (observeT (evalRandT go g)) initState
@@ -75,6 +105,8 @@ generateFirstSpecies g (CantusFirmus CantusFirmusSettings{..} cfm) = do
     :-:
     (Voice $ mconcat $ Note cfsDuration <$> counterpoint)
   where
+    CantusFirmus CantusFirmusSettings{..} cfm = fssCantusFirmus
+
     go :: RandT g (LogicT (ReaderT FirstSpeciesReader Maybe)) [Pitch SimplePitchClass]
     go = loop cfm
 
@@ -95,16 +127,34 @@ generateFirstSpecies g (CantusFirmus CantusFirmusSettings{..} cfm) = do
         | otherwise -> chooseWeighted @Word
           [ (6, p 1), (5, p 2), (3, p 3), (1, p 4)
           , (6, s 1), (5, s 2), (3, s 3), (1, s 4)
-          , (1, cfNote)
+          , (4, cfNote)
           ]
 
-      let parInterval = simpleInterval cfNote note
+      let
+        parInterval = (bool flip id fssCantusFirmusIsAbove simpleInterval) cfNote note
+        seqInterval = (bool flip id fssCantusFirmusIsAbove simpleInterval) fsrPrev note
+        parSonance = sonance parInterval
+        motion' = motion (fsrPrevCF, cfNote) (fsrPrev, note)
 
       satisfy
-        [ sonance parInterval /= Dissonance  -- 2.
+        [ parSonance /= Dissonance  -- 2.
+        , (fsrNoteIx == 0 || fsrNoteIx == cfsLength - 1) ==> sonance parInterval == Perfect  -- 5.
+        , fsrNoteIx == cfsLength - 2 ==> ciInterval parInterval == bool Ma6' Mi3' fssCantusFirmusIsAbove  -- 6.
+        -- Any motion is allowed except for the direct motion into a perfect consonance.
+        , parSonance == Perfect ==> motion' /= Direct  -- 7. 8. 9. 10.
+        , fsrNoteIx == 0 ==> bool
+            (parInterval == Pe1 || parInterval == Pe5 || parInterval == Pe8)
+            (parInterval == Pe1 || parInterval == Pe8)
+            fssCantusFirmusIsAbove  -- 11.
+        , seqInterval /= Tritone  -- 12.
+        , bool (cfNote <= note) (note <= cfNote) fssCantusFirmusIsAbove  -- 13.
+        , seqInterval /= Ma6  -- 14.
+        , (fsrNoteIx /= 0 && fsrNoteIx /= cfsLength - 1) ==> parInterval /= Pe1  -- 16.
         ]
 
       local (\r -> r
         { fsrNoteIx = fsrNoteIx + 1
+        , fsrPrev = note
+        , fsrPrevCF = cfNote
         })
         ((note :) <$> loop cfNotes)
