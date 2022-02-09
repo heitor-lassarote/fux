@@ -26,9 +26,8 @@ module Music.Fux.Counterpoint.CantusFirmus
 import Music.Fux.Prelude
 
 import Control.Monad.Logic
-import Control.Monad.Random.Strict (RandT, evalRandT, getRandomR, liftRandT)
+import Control.Monad.Random.Strict (RandT, evalRandT, getRandomR)
 import Control.Monad.Reader
-import Data.Random.Normal
 
 import Music.Fux.Types
 
@@ -119,10 +118,11 @@ generateCantusFirmus g settings@CantusFirmusSettings{..} =
     go :: RandT g (LogicT (ReaderT CantusFirmusReader Maybe)) [Pitch SimplePitchClass]
     go = do
       stepsAbove <- getRandomR (4, 9)  -- 5.
-      climaxIx :: Double <- liftRandT $ pure . normal' (fromIntegral $ cfsLength `div` 2, 3)
+      let cfrClimaxIx = cfsLength `div` 2
+      -- FIXME: Generate climax around the time, not only exactly there
       local (\r -> r
         { cfrClimax = ascScaleFor cfsPitch cfsKey !! stepsAbove
-        , cfrClimaxIx = round climaxIx
+        , cfrClimaxIx
         })
         loop
 
@@ -146,6 +146,7 @@ generateCantusFirmus g settings@CantusFirmusSettings{..} =
         | cfrPrevInt >= Pe4 -> single case cfrDirection of  -- 10.
           Down -> s 1
           Up   -> p 1
+        -- TODO: Make it less likely to do skips, particularly the octave.
         | cfrHasClimax -> chooseWeighted @Word
           [ (9, p 1), (5, p 2), (3, p 3), (1, p 4), (1, p 7)
           , (6, s 1), (3, s 2), (2, s 3), (1, s 4), (1, s 7)
