@@ -53,13 +53,11 @@ library:
     - megaparsec
     - MonadRandom
     - mtl
-    - normaldistribution
     - parser-combinators
     - pretty
     - random
     - template-haskell
     - text
-    - transformers
     - unicode
 
   ghc-options:
@@ -67,6 +65,7 @@ library:
     - -Wno-all-missed-specializations
     - -Wno-implicit-prelude
     - -Wno-missing-import-lists
+    - -Wno-missing-kind-signatures
     - -Wno-missing-safe-haskell-mode
     - -Wno-safe
     - -Wno-unsafe
