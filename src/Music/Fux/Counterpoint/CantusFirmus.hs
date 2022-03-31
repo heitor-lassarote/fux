@@ -40,16 +40,16 @@ import Music.Fux.Types
 -- melody and the settings used, as not all configurations allow for the
 -- generation of a well-formed cantus firmus.
 data CantusFirmus = CantusFirmus
-  { cfSettings :: CantusFirmusSettings  -- ^ The settings used to generate the cantus firmus.
-  , cfMelody   :: [Pitch SimplePitchClass]  -- ^ The melody of the cantus firmus.
+  { settings :: CantusFirmusSettings  -- ^ The settings used to generate the cantus firmus.
+  , melody   :: [Pitch SimplePitchClass]  -- ^ The melody of the cantus firmus.
   } deriving stock (Eq, Show)
 
 -- | Settings for the cantus firmus generator.
 data CantusFirmusSettings = CantusFirmusSettings
-  { cfsPitch    :: Pitch SimplePitchClass  -- ^ The first and last note of the cantus firmus.
-  , cfsDuration :: Duration  -- ^ How long each note should be.
-  , cfsLength   :: Word  -- ^ The quantity of notes.
-  , cfsKey      :: Key  -- ^ The key in which the cantus firmus should be generated. The key signature is given together with 'cfsPitch'.
+  { pitch    :: Pitch SimplePitchClass  -- ^ The first and last note of the cantus firmus.
+  , duration :: Duration  -- ^ How long each note should be.
+  , length   :: Word  -- ^ The quantity of notes.
+  , key      :: Key  -- ^ The key in which the cantus firmus should be generated. The key signature is given together with 'cfsPitch'.
   } deriving stock (Eq, Show)
 
 data Direction = Down | Up deriving stock Eq
@@ -61,14 +61,14 @@ getDirection prev next
   | otherwise    = Down
 
 data CantusFirmusReader = CantusFirmusReader
-  { cfrLeapIx    :: Word
-  , cfrClimax    :: Pitch SimplePitchClass
-  , cfrClimaxIx  :: Word
-  , cfrHasClimax :: Bool
-  , cfrNoteIx    :: Word
-  , cfrPrev      :: Pitch SimplePitchClass
-  , cfrPrevInt   :: CompoundInterval
-  , cfrDirection :: Direction
+  { leapIx    :: Word
+  , climax    :: Pitch SimplePitchClass
+  , climaxIx  :: Word
+  , hasClimax :: Bool
+  , noteIx    :: Word
+  , prev      :: Pitch SimplePitchClass
+  , prevInt   :: CompoundInterval
+  , direction :: Direction
   }
 
 -- | Generates a cantus firmus with the given settings. We use the rules
@@ -109,45 +109,45 @@ data CantusFirmusReader = CantusFirmusReader
 -- 4. [X] Avoid successive skips in the same direction (12.).
 -- 5. [X] Avoid skips which are not compensated (10.)
 generateCantusFirmus :: forall g. RandomGen g => g -> CantusFirmusSettings -> Maybe CantusFirmus
-generateCantusFirmus g settings@CantusFirmusSettings{..} =
+generateCantusFirmus g settings =
   CantusFirmus settings <$> runReaderT (observeT (evalRandT go g)) initState
   where
     initState :: CantusFirmusReader
-    initState = CantusFirmusReader 0 cfsPitch 0 False 0 cfsPitch Pe1 Down
+    initState = CantusFirmusReader 0 settings.pitch 0 False 0 settings.pitch Pe1 Down
 
     go :: RandT g (LogicT (ReaderT CantusFirmusReader Maybe)) [Pitch SimplePitchClass]
     go = do
       stepsAbove <- getRandomR (4, 9)  -- 5.
-      let cfrClimaxIx = cfsLength `div` 2
+      let climaxIx = settings.length `div` 2
       -- FIXME: Generate climax around the time, not only exactly there
       local (\r -> r
-        { cfrClimax = ascScaleFor cfsPitch cfsKey !! stepsAbove
-        , cfrClimaxIx
+        { climax = ascScaleFor settings.pitch settings.key !! stepsAbove
+        , climaxIx
         })
         loop
 
-    key = pPitchClass cfsPitch
-    prev n i = predScale key cfsKey n !! i
-    next n i = succScale key cfsKey n !! i
+    key = settings.pitch.pitchClass
+    prev n i = predScale key settings.key n !! i
+    next n i = succScale key settings.key n !! i
 
     loop :: RandT g (LogicT (ReaderT CantusFirmusReader Maybe)) [Pitch SimplePitchClass]
     loop = do
-      CantusFirmusReader{..} <- ask
-      let p = prev cfrPrev
-      let s = next cfrPrev
+      ctx <- ask
+      let p = prev ctx.prev
+      let s = next ctx.prev
 
       note <- if
-        | cfrNoteIx == 0 || cfrNoteIx == cfsLength - 1 -> single cfsPitch  -- 2.
-        | cfrNoteIx == cfsLength - 2 -> chooseWeighted @Word  -- 3.
-          [ (6, next cfsPitch 1)
-          , (4, pred cfsPitch)
+        | ctx.noteIx == 0 || ctx.noteIx == settings.length - 1 -> single settings.pitch  -- 2.
+        | ctx.noteIx == settings.length - 2 -> chooseWeighted @Word  -- 3.
+          [ (6, next settings.pitch 1)
+          , (4, pred settings.pitch)
           ]
-        | cfrNoteIx == cfrClimaxIx -> single cfrClimax
-        | cfrPrevInt >= Pe4 -> single case cfrDirection of  -- 10.
+        | ctx.noteIx == ctx.climaxIx -> single ctx.climax
+        | ctx.prevInt >= Pe4 -> single case ctx.direction of  -- 10.
           Down -> s 1
           Up   -> p 1
         -- TODO: Make it less likely to do skips, particularly the octave.
-        | cfrHasClimax -> chooseWeighted @Word
+        | ctx.hasClimax -> chooseWeighted @Word
           [ (9, p 1), (5, p 2), (3, p 3), (1, p 4), (1, p 7)
           , (6, s 1), (3, s 2), (2, s 3), (1, s 4), (1, s 7)
           ]
@@ -156,32 +156,32 @@ generateCantusFirmus g settings@CantusFirmusSettings{..} =
           , (6, p 1), (3, p 2), (2, p 3), (1, p 4), (1, p 7)
           ]
 
-      if cfrNoteIx == cfsLength
-        then [] <$ guard cfrHasClimax  -- 6.
+      if ctx.noteIx == settings.length
+        then [] <$ guard ctx.hasClimax  -- 6.
         else do
-          let seqInterval = simpleInterval cfrPrev note
-          let direction = getDirection cfrPrev note
+          let seqInterval = simpleInterval ctx.prev note
+          let direction = getDirection ctx.prev note
           let isLeap = seqInterval > Ma2
-          let wasLeap = cfrPrevInt > Ma2
+          let wasLeap = ctx.prevInt > Ma2
 
           satisfy
-            [ simpleInterval note cfrClimax <= CompoundInterval 1 Ma3'  -- 5.
-            , cfrNoteIx /= cfrClimaxIx ==> note < cfrClimax  -- 6.
+            [ simpleInterval note ctx.climax <= CompoundInterval 1 Ma3'  -- 5.
+            , ctx.noteIx /= ctx.climaxIx ==> note < ctx.climax  -- 6.
             , seqInterval /= Au4  -- 4.a.
             , seqInterval /= Ma7 && seqInterval /= Mi7  -- 4.b.
-            , isLeap ==> cfrLeapIx <= 1  -- 11.
-            , (wasLeap && isLeap) ==> direction /= cfrDirection -- 12.
-            , pPitchClass cfrPrev == pred key ==> pPitchClass note == key  -- 13.
-            , (cfsKey == Minor && cfrNoteIx < cfsLength - 2) ==> note /= pred cfsPitch  -- 14.
+            , isLeap ==> ctx.leapIx <= 1  -- 11.
+            , (wasLeap && isLeap) ==> direction /= ctx.direction -- 12.
+            , ctx.prev.pitchClass == pred key ==> note.pitchClass == key  -- 13.
+            , (settings.key == Minor && ctx.noteIx < settings.length - 2) ==> note /= pred settings.pitch  -- 14.
             , seqInterval <= Pe8  -- Recommendation 2.
             ]
 
           local (\r -> r
-            { cfrNoteIx = cfrNoteIx + 1
-            , cfrPrev = note
-            , cfrHasClimax = cfrHasClimax || note == cfrClimax
-            , cfrPrevInt = seqInterval
-            , cfrDirection = direction
-            , cfrLeapIx = if isLeap then cfrLeapIx + 1 else 0
+            { noteIx = ctx.noteIx + 1
+            , prev = note
+            , hasClimax = ctx.hasClimax || note == ctx.climax
+            , prevInt = seqInterval
+            , direction = direction
+            , leapIx = if isLeap then ctx.leapIx + 1 else 0
             })
             ((note :) <$> loop)

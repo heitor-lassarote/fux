@@ -64,6 +64,8 @@ library
       LexicalNegation
       MultiWayIf
       NamedFieldPuns
+      NoFieldSelectors
+      OverloadedRecordDot
       OverloadedStrings
       PatternSynonyms
       RankNTypes
@@ -104,6 +106,8 @@ test-suite fux-core
       LexicalNegation
       MultiWayIf
       NamedFieldPuns
+      NoFieldSelectors
+      OverloadedRecordDot
       OverloadedStrings
       PatternSynonyms
       RankNTypes

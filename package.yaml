@@ -29,6 +29,8 @@ default-extensions:
   - LexicalNegation
   - MultiWayIf
   - NamedFieldPuns
+  - NoFieldSelectors
+  - OverloadedRecordDot
   - OverloadedStrings
   - PatternSynonyms
   - RankNTypes

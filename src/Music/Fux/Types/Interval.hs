@@ -90,8 +90,8 @@ toGenericInterval = \case
 -- | Represents a compound interval, which is like a simple interval but also
 -- accounts for skips greater than an octave.
 data CompoundInterval = CompoundInterval
-  { ciOctaves :: Word  -- ^ How many octaves it has skipped. 0 means it's absolute.
-  , ciInterval :: Interval  -- ^ The simple interval.
+  { octaves :: Word  -- ^ How many octaves it has skipped. 0 means it's absolute.
+  , interval :: Interval  -- ^ The simple interval.
   } deriving stock (Bounded, Eq, Ord, Show)
 
 pattern Pe1, Mi2, Ma2, Mi3, Ma3, Pe4, Au4, Pe5, Mi6, Ma6, Mi7, Ma7, Pe8 :: CompoundInterval
@@ -129,7 +129,7 @@ pattern Tritone = Au4
 
 -- | Calculate the simple interval between two pitches.
 interval' :: Pitch PitchClass -> Pitch PitchClass -> Interval
-interval' p1 p2 = ciInterval $ interval p1 p2
+interval' p1 p2 = (interval p1 p2).interval
 
 -- | Calculate the compound interval between two pitches.
 interval :: Pitch PitchClass -> Pitch PitchClass -> CompoundInterval
@@ -184,4 +184,4 @@ sonance' = \case
 --
 -- Note: Fux considers the perfect fourth a dissonance.
 sonance :: CompoundInterval -> Sonance
-sonance = sonance' . ciInterval
+sonance = sonance' . (.interval)
