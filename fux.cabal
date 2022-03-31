@@ -41,13 +41,11 @@ library
     , logict
     , megaparsec
     , mtl
-    , normaldistribution
     , parser-combinators
     , pretty
     , random
     , template-haskell
     , text
-    , transformers
     , unicode
   hs-source-dirs:
       src/
@@ -66,6 +64,8 @@ library
       LexicalNegation
       MultiWayIf
       NamedFieldPuns
+      NoFieldSelectors
+      OverloadedRecordDot
       OverloadedStrings
       PatternSynonyms
       RankNTypes
@@ -79,7 +79,7 @@ library
       TypeSynonymInstances
       ViewPatterns
       UndecidableInstances
-  ghc-options: -Weverything -Wno-all-missed-specializations -Wno-implicit-prelude -Wno-missing-import-lists -Wno-missing-safe-haskell-mode -Wno-safe -Wno-unsafe
+  ghc-options: -Weverything -Wno-all-missed-specializations -Wno-implicit-prelude -Wno-missing-import-lists -Wno-missing-kind-signatures -Wno-missing-safe-haskell-mode -Wno-safe -Wno-unsafe
   default-language: Haskell2010
 
 test-suite fux-core
@@ -106,6 +106,8 @@ test-suite fux-core
       LexicalNegation
       MultiWayIf
       NamedFieldPuns
+      NoFieldSelectors
+      OverloadedRecordDot
       OverloadedStrings
       PatternSynonyms
       RankNTypes

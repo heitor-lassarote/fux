@@ -45,8 +45,8 @@ import System.Random.Stateful (Uniform (..), UniformRange (..))
 -- | The absolute pitch. It's the combination of some pitch class and the octave
 -- where it's located.
 data Pitch pitchClass = Pitch
-  { pPitchClass :: pitchClass  -- ^ The musical note to which this pitch corresponds to,
-  , pOctave     :: Octave  -- ^ The octave of this pitch.
+  { pitchClass :: pitchClass  -- ^ The musical note to which this pitch corresponds to,
+  , octave     :: Octave  -- ^ The octave of this pitch.
   } deriving stock (Data, Eq, Show)
 
 instance Ord pitchClass => Ord (Pitch pitchClass) where

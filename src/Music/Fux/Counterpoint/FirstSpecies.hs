@@ -37,14 +37,14 @@ newtype FirstSpecies = FirstSpecies
   } deriving stock (Eq, Show)
 
 data FirstSpeciesSettings = FirstSpeciesSettings
-  { fssCantusFirmus        :: CantusFirmus
-  , fssCantusFirmusIsAbove :: Bool
+  { cantusFirmus        :: CantusFirmus
+  , cantusFirmusIsAbove :: Bool
   }
 
 data FirstSpeciesReader = FirstSpeciesReader
-  { fsrNoteIx :: Word
-  , fsrPrev   :: Pitch SimplePitchClass
-  , fsrPrevCF :: Pitch SimplePitchClass
+  { noteIx :: Word
+  , prev   :: Pitch SimplePitchClass
+  , prevCF :: Pitch SimplePitchClass
   }
 
 -- | Generates a first species counterpoint of two or more voices, given some
@@ -101,27 +101,27 @@ generateFirstSpecies g FirstSpeciesSettings{..} = do
   let initState = FirstSpeciesReader 0 firstNote firstNote
   counterpoint <- runReaderT (observeT (evalRandT go g)) initState
   pure $ FirstSpecies $
-    (Voice $ mconcat $ Note cfsDuration <$> cfm)
+    (Voice $ mconcat $ Note cfs.duration <$> cfm)
     :-:
-    (Voice $ mconcat $ Note cfsDuration <$> counterpoint)
+    (Voice $ mconcat $ Note cfs.duration <$> counterpoint)
   where
-    CantusFirmus CantusFirmusSettings{..} cfm = fssCantusFirmus
+    CantusFirmus cfs cfm = cantusFirmus
 
     go :: RandT g (LogicT (ReaderT FirstSpeciesReader Maybe)) [Pitch SimplePitchClass]
     go = loop cfm
 
-    key = pPitchClass cfsPitch
-    prev n i = predScale key cfsKey n !! i
-    next n i = succScale key cfsKey n !! i
+    key = cfs.pitch.pitchClass
+    prev n i = predScale key cfs.key n !! i
+    next n i = succScale key cfs.key n !! i
 
     loop
       :: [Pitch SimplePitchClass]
       -> RandT g (LogicT (ReaderT FirstSpeciesReader Maybe)) [Pitch SimplePitchClass]
     loop [] = pure []
     loop (cfNote : cfNotes) = do
-      FirstSpeciesReader{..} <- ask
-      let p = prev fsrPrev
-      let s = next fsrPrev
+      ctx <- ask
+      let p = prev ctx.prev
+      let s = next ctx.prev
 
       note <- if
         | otherwise -> chooseWeighted @Word
@@ -131,30 +131,30 @@ generateFirstSpecies g FirstSpeciesSettings{..} = do
           ]
 
       let
-        parInterval = (bool flip id fssCantusFirmusIsAbove simpleInterval) cfNote note
-        seqInterval = (bool flip id fssCantusFirmusIsAbove simpleInterval) fsrPrev note
+        parInterval = (bool flip id cantusFirmusIsAbove) simpleInterval cfNote note
+        seqInterval = (bool flip id cantusFirmusIsAbove) simpleInterval ctx.prev note
         parSonance = sonance parInterval
-        motion' = motion (fsrPrevCF, cfNote) (fsrPrev, note)
+        motion' = motion (ctx.prevCF, cfNote) (ctx.prev, note)
 
       satisfy
         [ parSonance /= Dissonance  -- 2.
-        , (fsrNoteIx == 0 || fsrNoteIx == cfsLength - 1) ==> sonance parInterval == Perfect  -- 5.
-        , fsrNoteIx == cfsLength - 2 ==> ciInterval parInterval == bool Ma6' Mi3' fssCantusFirmusIsAbove  -- 6.
+        , (ctx.noteIx == 0 || ctx.noteIx == cfs.length - 1) ==> sonance parInterval == Perfect  -- 5.
+        , ctx.noteIx == cfs.length - 2 ==> parInterval.interval == bool Ma6' Mi3' cantusFirmusIsAbove  -- 6.
         -- Any motion is allowed except for the direct motion into a perfect consonance.
         , parSonance == Perfect ==> motion' /= Direct  -- 7. 8. 9. 10.
-        , fsrNoteIx == 0 ==> bool
+        , ctx.noteIx == 0 ==> bool
             (parInterval == Pe1 || parInterval == Pe5 || parInterval == Pe8)
             (parInterval == Pe1 || parInterval == Pe8)
-            fssCantusFirmusIsAbove  -- 11.
+            cantusFirmusIsAbove  -- 11.
         , seqInterval /= Tritone  -- 12.
-        , bool (cfNote <= note) (note <= cfNote) fssCantusFirmusIsAbove  -- 13.
+        , bool (cfNote <= note) (note <= cfNote) cantusFirmusIsAbove  -- 13.
         , seqInterval /= Ma6  -- 14.
-        , (fsrNoteIx /= 0 && fsrNoteIx /= cfsLength - 1) ==> parInterval /= Pe1  -- 16.
+        , (ctx.noteIx /= 0 && ctx.noteIx /= cfs.length - 1) ==> parInterval /= Pe1  -- 16.
         ]
 
       local (\r -> r
-        { fsrNoteIx = fsrNoteIx + 1
-        , fsrPrev = note
-        , fsrPrevCF = cfNote
+        { noteIx = ctx.noteIx + 1
+        , prev = note
+        , prevCF = cfNote
         })
         ((note :) <$> loop cfNotes)
