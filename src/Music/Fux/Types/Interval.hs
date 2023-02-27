@@ -1,4 +1,4 @@
--- Copyright (c) 2021, Heitor Toledo Lassarote de Paula
+-- Copyright (c) 2021-2023, Heitor Toledo Lassarote de Paula
 --
 -- This file is part of fux.
 --
@@ -137,20 +137,21 @@ interval p1 p2 = simpleInterval (complexToSimplePitch p1) (complexToSimplePitch 
 
 -- | Calculate the compound interval between two simple pitches.
 simpleInterval :: Pitch SimplePitchClass -> Pitch SimplePitchClass -> CompoundInterval
-simpleInterval (Pitch n1 o1) (Pitch n2 o2) =
-  case compare n1 n2 of
-    LT -> case compare o1 o2 of
-      LT -> CompoundInterval (octaveDiff - 1) (toEnum $      fromEnum n2 - fromEnum n1)
-      EQ -> CompoundInterval  octaveDiff      (toEnum $      fromEnum n2 - fromEnum n1)
-      GT -> CompoundInterval (octaveDiff - 1) (toEnum $ 12 + fromEnum n1 - fromEnum n2)
+simpleInterval p1 p2 =
+  case compare p1.pitchClass p2.pitchClass of
+    LT -> intervalSorted p1 p2
     EQ -> CompoundInterval octaveDiff Pe1'
-    GT -> case compare o1 o2 of
-      LT -> CompoundInterval (octaveDiff - 1) (toEnum $ 12 + fromEnum n2 - fromEnum n1)
-      EQ -> CompoundInterval  octaveDiff      (toEnum $      fromEnum n1 - fromEnum n2)
-      GT -> CompoundInterval (octaveDiff - 1) (toEnum $      fromEnum n1 - fromEnum n2)
+    GT -> intervalSorted p2 p1
   where
     octaveDiff :: Word
-    octaveDiff = fromIntegral $ abs (o1 - o2)
+    octaveDiff = fromIntegral $ abs (p1.octave - p2.octave)
+
+    intervalSorted :: Pitch SimplePitchClass -> Pitch SimplePitchClass -> CompoundInterval
+    intervalSorted (Pitch (fromEnum -> n1) o1) (Pitch (fromEnum -> n2) o2) =
+      case compare o1 o2 of
+        LT -> CompoundInterval (octaveDiff - 1) (toEnum $      n2 - n1)
+        EQ -> CompoundInterval  octaveDiff      (toEnum $      n2 - n1)
+        GT -> CompoundInterval (octaveDiff - 1) (toEnum $ 12 + n1 - n2)
 
 -- | Represents whether some simple or compound interval is a perfect
 -- consonance, imperfect consonance or dissonance.
