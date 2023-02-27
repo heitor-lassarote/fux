@@ -1,4 +1,4 @@
--- Copyright (c) 2021, Heitor Toledo Lassarote de Paula
+-- Copyright (c) 2021-2023, Heitor Toledo Lassarote de Paula
 --
 -- This file is part of fux.
 --
@@ -15,15 +15,29 @@
 --     You should have received a copy of the GNU General Public License
 --     along with fux.  If not, see <https://www.gnu.org/licenses/>.
 --
--- | Miscellaneous characters for musical symbols.
-
+-- | This module provides music-related Unicode characters.
 module Data.Char.Music
-  ( doubleFlat, flat, natural, sharp, doubleSharp
+  (
+    -- * Music characters
+    doubleFlat, flat, natural, sharp, doubleSharp
   ) where
 
-doubleFlat, flat, natural, sharp, doubleSharp :: Char
-doubleFlat  = '\x1D12B'
-flat        = '\x266D'
-natural     = '\x266E'
-sharp       = '\x266F'
+-- | Unicode character '𝄫' (U+1D12B).
+doubleFlat :: Char
+doubleFlat = '\x1D12B'
+
+-- | Unicode character '♭' (U+266D).
+flat :: Char
+flat = '\x266D'
+
+-- | Unicode character '♮' (U+266E).
+natural :: Char
+natural = '\x266E'
+
+-- | Unicode character '♯' (U+266F).
+sharp :: Char
+sharp = '\x266F'
+
+-- | Unicode character '𝄪' (U+1D12A).
+doubleSharp :: Char
 doubleSharp = '\x1D12A'
